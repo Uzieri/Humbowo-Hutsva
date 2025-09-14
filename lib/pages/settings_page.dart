@@ -72,7 +72,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildSection(
             _settingsService.selectedLanguage == 'english'
                 ? 'Daily Verse'
-                : 'Vesi reZuva',
+                : 'Vhesi reZuva',
             [
               _buildVerseOfDayToggle(),
               if (_verseOfDayEnabled) ...[
@@ -143,13 +143,13 @@ class _SettingsPageState extends State<SettingsPage> {
         title: Text(
           language == 'english'
               ? 'Daily Verse Notifications'
-              : 'Zviziviso zveVesi reZuva',
+              : 'Zviziviso zveVhesi reZuva',
           style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black87),
         ),
         subtitle: Text(
           language == 'english'
               ? 'Receive a random verse every morning'
-              : 'Gamuchira vesi rakasarudzwa mangwanani ose',
+              : 'Gamuchira vhesi rakasarudzwa mangwanani ose',
           style: TextStyle(
             color: _isDarkMode ? Colors.white70 : Colors.black54,
           ),
@@ -167,10 +167,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   value
                       ? (language == 'english'
                             ? 'Daily verse enabled'
-                            : 'Vesi reZuva rakabatsiwa')
+                            : 'Vhesi reZuva rakabatsiwa')
                       : (language == 'english'
                             ? 'Daily verse disabled'
-                            : 'Vesi reZuva rakamiswa'),
+                            : 'Vhesi reZuva rakamiswa'),
                 ),
               ),
             );
@@ -215,7 +215,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   content: Text(
                     language == 'english'
                         ? 'Notification time updated to ${time.format(context)}'
-                        : 'Nguva yezviziviso yakachinjidzwa kuti ${time.format(context)}',
+                        : 'Nguva yezviziviso yachinjwa kuita ${time.format(context)}',
                   ),
                 ),
               );
@@ -238,7 +238,7 @@ class _SettingsPageState extends State<SettingsPage> {
             title: Text(
               language == 'english'
                   ? 'Refresh Today\'s Verse'
-                  : 'Vandudzira Vesi raZuva',
+                  : 'Vandudzira Vhesi raZuva',
               style: TextStyle(
                 color: _isDarkMode ? Colors.white : Colors.black87,
               ),
@@ -246,7 +246,7 @@ class _SettingsPageState extends State<SettingsPage> {
             subtitle: Text(
               language == 'english'
                   ? 'Get a new random verse for today'
-                  : 'Tora vesi irisina rakasarudzwa razuva rino',
+                  : 'Wana vhesi rasarudzwa muzuva ranhasi',
               style: TextStyle(
                 color: _isDarkMode ? Colors.white70 : Colors.black54,
               ),
@@ -259,7 +259,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     content: Text(
                       language == 'english'
                           ? 'Today\'s verse refreshed!'
-                          : 'Vesi razuva ravandudzwa!',
+                          : 'Vhesi razuva ravandudzwa!',
                     ),
                   ),
                 );
@@ -272,7 +272,7 @@ class _SettingsPageState extends State<SettingsPage> {
             title: Text(
               language == 'english'
                   ? 'Show Today\'s Verse'
-                  : 'Ratidza Vesi raZuva',
+                  : 'Ratidza Vhesi reZuva',
               style: TextStyle(
                 color: _isDarkMode ? Colors.white : Colors.black87,
               ),
@@ -280,7 +280,7 @@ class _SettingsPageState extends State<SettingsPage> {
             subtitle: Text(
               language == 'english'
                   ? 'View the current verse of the day'
-                  : 'Ona vesi razuva rino',
+                  : 'Ona vhesi rezuva ranhasi',
               style: TextStyle(
                 color: _isDarkMode ? Colors.white70 : Colors.black54,
               ),
