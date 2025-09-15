@@ -170,18 +170,18 @@ class _ChaptersPageState extends State<ChaptersPage> {
                 Navigator.pushNamed(context, AppRoutes.settings).then((
                   _,
                 ) async {
+                  // Add small delay to ensure settings are fully saved
+                  await Future.delayed(const Duration(milliseconds: 100));
+
                   // Reload settings when returning from settings page
                   await _settingsService.init();
-                  final newLanguage = _settingsService.selectedLanguage;
 
                   if (mounted) {
                     setState(() {
-                      currentLanguage = newLanguage;
+                      // Force complete rebuild to pick up all theme changes
+                      currentLanguage = _settingsService.selectedLanguage;
                     });
                   }
-
-                  // Also check for language change specifically
-                  _checkLanguageChange();
                 });
               },
             ),

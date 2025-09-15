@@ -1,12 +1,15 @@
 // services/verse_of_day_service.dart
 
 import 'dart:math';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import '../models/book_models.dart';
 import '../services/settings_service.dart';
 import '../services/book_service.dart';
@@ -52,13 +55,69 @@ class VerseOfDayService {
       await _settingsService.init();
       _prefs = await SharedPreferences.getInstance();
       await _initializeTimezone();
+
+      // Request permissions BEFORE initializing notifications
+      final hasPermission = await _requestNotificationPermissions();
+      if (!hasPermission) {
+        print('Notification permissions not granted');
+      }
+
       await _initializeNotifications();
       await _loadCurrentVerseOfDay();
-      if (isEnabled) {
+
+      if (isEnabled && hasPermission) {
         await _scheduleNotifications();
       }
     } catch (e) {
       print('Error initializing VerseOfDayService: $e');
+    }
+  }
+
+  // Request notification permissions for Android 13+ and iOS
+  Future<bool> _requestNotificationPermissions() async {
+    try {
+      // Check if we're on Android 13+
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+
+        // Android 13+ requires explicit permission request
+        if (androidInfo.version.sdkInt >= 33) {
+          final status = await Permission.notification.request();
+          print('Notification permission status: $status');
+
+          if (!status.isGranted) {
+            print('Notification permission denied');
+            return false;
+          }
+        }
+
+        // Android 12+ requires exact alarm permission
+        if (androidInfo.version.sdkInt >= 31) {
+          final exactAlarmStatus = await Permission.scheduleExactAlarm.status;
+          if (!exactAlarmStatus.isGranted) {
+            final result = await Permission.scheduleExactAlarm.request();
+            print('Exact alarm permission status: $result');
+            if (!result.isGranted) {
+              print(
+                'Exact alarm permission denied - notifications may not work reliably',
+              );
+            }
+          }
+        }
+      } else if (Platform.isIOS) {
+        // iOS permission request
+        final bool? granted = await _flutterLocalNotificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin
+            >()
+            ?.requestPermissions(alert: true, badge: true, sound: true);
+        return granted ?? false;
+      }
+
+      return true;
+    } catch (e) {
+      print('Error requesting notification permissions: $e');
+      return false;
     }
   }
 
@@ -68,6 +127,7 @@ class VerseOfDayService {
       tz.initializeTimeZones();
       final String timeZoneName = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(timeZoneName));
+      print('Timezone initialized: $timeZoneName');
     } catch (e) {
       print('Error initializing timezone: $e');
       // Fallback to UTC if timezone detection fails
@@ -78,13 +138,17 @@ class VerseOfDayService {
   // Initialize local notifications
   Future<void> _initializeNotifications() async {
     try {
+      // Android initialization with notification channel
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
       );
+
+      // iOS initialization
       const iosSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
+        notificationCategories: [],
       );
 
       const initSettings = InitializationSettings(
@@ -92,12 +156,46 @@ class VerseOfDayService {
         iOS: iosSettings,
       );
 
-      await _flutterLocalNotificationsPlugin.initialize(
+      final initialized = await _flutterLocalNotificationsPlugin.initialize(
         initSettings,
         onDidReceiveNotificationResponse: _onNotificationTapped,
+        onDidReceiveBackgroundNotificationResponse:
+            _onBackgroundNotificationTapped,
       );
+
+      print('Notifications initialized: $initialized');
+
+      // Create notification channel for Android 8.0+
+      if (Platform.isAndroid) {
+        await _createNotificationChannel();
+      }
     } catch (e) {
       print('Error initializing notifications: $e');
+    }
+  }
+
+  // Create notification channel for Android
+  Future<void> _createNotificationChannel() async {
+    try {
+      const androidChannel = AndroidNotificationChannel(
+        'verse_of_day',
+        'Daily Verse',
+        description: 'Daily spiritual verse notifications',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+        showBadge: true,
+      );
+
+      await _flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(androidChannel);
+
+      print('Notification channel created');
+    } catch (e) {
+      print('Error creating notification channel: $e');
     }
   }
 
@@ -106,6 +204,12 @@ class VerseOfDayService {
     print('Notification tapped: ${response.payload}');
     // Reschedule the next day's notification
     _scheduleNotifications();
+  }
+
+  // Handle background notification tap (for when app is terminated)
+  @pragma('vm:entry-point')
+  static void _onBackgroundNotificationTapped(NotificationResponse response) {
+    print('Background notification tapped: ${response.payload}');
   }
 
   // Load or generate today's verse
@@ -171,11 +275,18 @@ class VerseOfDayService {
     }
   }
 
-  // Schedule daily notifications (fixed version using zonedSchedule)
+  // Schedule daily notifications
   Future<void> _scheduleNotifications() async {
     if (!isEnabled || _prefs == null) return;
 
     try {
+      // Check if we have permission first
+      bool hasPermission = await _checkNotificationPermission();
+      if (!hasPermission) {
+        print('No notification permission - cannot schedule notifications');
+        return;
+      }
+
       // Cancel all existing notifications
       await _flutterLocalNotificationsPlugin.cancelAll();
 
@@ -191,6 +302,8 @@ class VerseOfDayService {
         icon: '@mipmap/ic_launcher',
         playSound: true,
         enableVibration: true,
+        enableLights: true,
+        ticker: 'Daily Verse',
       );
 
       const iosDetails = DarwinNotificationDetails(
@@ -220,7 +333,7 @@ class VerseOfDayService {
         scheduledTime = scheduledTime.add(const Duration(days: 1));
       }
 
-      // Schedule the notification using zonedSchedule
+      // Schedule the notification
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         100, // unique notification ID
         language == 'english' ? '🌅 Daily Verse' : '🌅 Vesi reZuva',
@@ -231,20 +344,46 @@ class VerseOfDayService {
         notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: 'verse_of_day',
-        matchDateTimeComponents:
-            DateTimeComponents.time, // This makes it repeat daily
+        matchDateTimeComponents: DateTimeComponents.time, // Daily repeat
       );
 
-      print('Notification scheduled for: $scheduledTime');
+      print('✅ Notification scheduled successfully for: $scheduledTime');
+
+      // Verify the notification was scheduled
+      final pendingNotifications = await _flutterLocalNotificationsPlugin
+          .pendingNotificationRequests();
+      print('Pending notifications count: ${pendingNotifications.length}');
+      for (var notification in pendingNotifications) {
+        print(
+          'Pending notification ID: ${notification.id}, Title: ${notification.title}',
+        );
+      }
     } catch (e) {
-      print('Error scheduling notifications: $e');
+      print('❌ Error scheduling notifications: $e');
+      print('Stack trace: ${StackTrace.current}');
+    }
+  }
+
+  // Check notification permission status
+  Future<bool> _checkNotificationPermission() async {
+    try {
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt >= 33) {
+          final status = await Permission.notification.status;
+          return status.isGranted;
+        }
+      }
+      return true; // Permission not required for older Android versions
+    } catch (e) {
+      print('Error checking notification permission: $e');
+      return false;
     }
   }
 
   // Show verse of day popup
   Future<void> showVerseOfDayPopup(BuildContext context) async {
     if (_currentVerseOfDay == null) {
-      // Try to load verse if not available
       await _loadCurrentVerseOfDay();
       if (_currentVerseOfDay == null) return;
     }
@@ -380,7 +519,7 @@ class VerseOfDayService {
     }
   }
 
-  // Check and reschedule notifications if needed (call this when app starts)
+  // Check and reschedule notifications if needed
   Future<void> checkAndRescheduleNotifications() async {
     if (!isEnabled || _prefs == null) return;
 
@@ -388,8 +527,13 @@ class VerseOfDayService {
       final pendingNotifications = await _flutterLocalNotificationsPlugin
           .pendingNotificationRequests();
 
+      print(
+        'Checking notifications - found ${pendingNotifications.length} pending',
+      );
+
       // If no notifications are pending, reschedule
       if (pendingNotifications.isEmpty) {
+        print('No pending notifications found - rescheduling...');
         await _scheduleNotifications();
       }
     } catch (e) {
@@ -410,6 +554,47 @@ class VerseOfDayService {
     final verse = _currentVerseOfDay!;
 
     return '"${verse.verse.text}"\n\n— ${verse.chapter.displayTitle}, ${language == 'english' ? 'Verse' : 'Vesi'} ${verse.verse.number}';
+  }
+
+  // Test notification (for debugging)
+  Future<void> testNotification() async {
+    try {
+      final language = _settingsService.selectedLanguage;
+
+      const androidDetails = AndroidNotificationDetails(
+        'verse_of_day',
+        'Daily Verse',
+        channelDescription: 'Daily spiritual verse notifications',
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const notificationDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      await _flutterLocalNotificationsPlugin.show(
+        999, // test notification ID
+        language == 'english' ? '🌅 Test Daily Verse' : '🌅 Yedza Vesi reZuva',
+        language == 'english'
+            ? 'This is a test notification. Your daily verses are working!'
+            : 'Iyi inyevedzero. Mavesi ako emazuva ari kushanda!',
+        notificationDetails,
+        payload: 'test_verse_of_day',
+      );
+
+      print('✅ Test notification sent successfully');
+    } catch (e) {
+      print('❌ Error sending test notification: $e');
+    }
   }
 }
 

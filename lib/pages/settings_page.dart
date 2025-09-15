@@ -1,4 +1,4 @@
-// pages/settings_page.dart - Updated with Verse of Day settings
+// pages/settings_page.dart - Updated with Test Notification Button
 
 import 'package:flutter/material.dart';
 import '../services/settings_service.dart';
@@ -287,6 +287,97 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             onTap: () {
               VerseOfDayService.instance.showVerseOfDayPopup(context);
+            },
+          ),
+          const Divider(height: 1),
+          // NEW TEST NOTIFICATION BUTTON
+          ListTile(
+            leading: Icon(
+              Icons.notifications_active,
+              color: Colors.orange[700],
+            ),
+            title: Text(
+              language == 'english' ? 'Test Notification' : 'Yedza Zviziviso',
+              style: TextStyle(
+                color: _isDarkMode ? Colors.white : Colors.black87,
+              ),
+            ),
+            subtitle: Text(
+              language == 'english'
+                  ? 'Send a test notification to verify it\'s working'
+                  : 'Tumira yekuyedza kuti uone kana zvichishanda',
+              style: TextStyle(
+                color: _isDarkMode ? Colors.white70 : Colors.black54,
+              ),
+            ),
+            trailing: Icon(Icons.send, color: Colors.orange[700], size: 20),
+            onTap: () async {
+              // Show loading indicator
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => Center(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          Text(
+                            language == 'english'
+                                ? 'Sending test notification...'
+                                : 'Kutumira yekuyedza...',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+
+              try {
+                // Send test notification
+                await VerseOfDayService.instance.testNotification();
+
+                // Close loading indicator
+                if (mounted) Navigator.of(context).pop();
+
+                // Show success message
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        language == 'english'
+                            ? '✅ Test notification sent! Check your notification panel.'
+                            : '✅ Yekuyedza yatumirwa! Tarisa pazviziviso zvako.',
+                      ),
+                      backgroundColor: Colors.green[700],
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              } catch (e) {
+                // Close loading indicator
+                if (mounted) Navigator.of(context).pop();
+
+                // Show error message
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        language == 'english'
+                            ? '❌ Failed to send test notification: ${e.toString()}'
+                            : '❌ Tatadza kutumira yekuyedza: ${e.toString()}',
+                      ),
+                      backgroundColor: Colors.red[700],
+                      duration: const Duration(seconds: 5),
+                    ),
+                  );
+                }
+              }
             },
           ),
         ],
