@@ -109,7 +109,7 @@ class SharingService {
       content += '  $_appName\n';
       content += '  $_attribution\n\n';
     } else {
-      content += '— ${chapter.displayTitle}, Mavesi $verseNumbers\n';
+      content += '— ${chapter.displayTitle}, Mavhesi $verseNumbers\n';
       content += '  $_appName\n';
       content += '  $_attribution\n\n';
     }
@@ -120,7 +120,7 @@ class SharingService {
       content,
       subject: language == 'english'
           ? '${chapter.displayTitle}, Verses $verseNumbers'
-          : '${chapter.displayTitle}, Mavesi $verseNumbers',
+          : '${chapter.displayTitle}, Mavhesi $verseNumbers',
     );
   }
 
@@ -158,7 +158,7 @@ class SharingService {
         content += '\n\n[... and ${chapter.verses.length - 5} more verses]';
       } else {
         content +=
-            '\n\n[... uye mavesi ${chapter.verses.length - 5} akawedzera]';
+            '\n\n[... uye mavhesi ${chapter.verses.length - 5} akawedzera]';
       }
     }
 
@@ -189,7 +189,7 @@ class SharingService {
       content += '#SacredVisions #JohnMarange #Faith #Inspiration #Apostolic';
     } else {
       content += '— ${chapter.displayTitle}, Vesi ${verse.number}\n';
-      content += '#HumbowoHutsva #JohnMarange #Kutenda #Kufuridza #Apostolic';
+      content += '#HumbowoHutsva #JohnMarange #Kutenda #Apostolic';
     }
 
     await Share.share(content);
@@ -214,7 +214,7 @@ class SharingService {
       content += '📖 Mafambiro angu ekuverenga mu $_appName:\n\n';
       content += '✅ Ndapedza: $chaptersRead/$totalChapters zvitsauko\n';
       content += '📊 Mafambiro: ${progressPercentage.toInt()}%\n\n';
-      content += 'Joyina neni parwendo urwu rwemweya!\n\n';
+      content += 'Joyina neni parwendo urwu rweku namata!\n\n';
     }
 
     content += _sharedVia;
@@ -249,7 +249,7 @@ class SharingService {
       content += '• Chengetedza mavesi anoda\n';
       content += '• Ongorora mafambiro ekuverenga\n';
       content += '• Interface yakanaka, nyore kuverenga\n\n';
-      content += 'Dhauni uye ujoine parwendo urwu rwemweya!';
+      content += 'Dhaunilodha uye ujoine parwendo urwu rwekumata!';
     }
 
     await Share.share(content);
@@ -274,7 +274,9 @@ class SharingService {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                language == 'english' ? 'Share Options' : 'Sarudza Kukugovana',
+                language == 'english'
+                    ? 'Share Options'
+                    : 'Sarudza nzira yekugova',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -296,13 +298,13 @@ class SharingService {
                   title: Text(
                     language == 'english'
                         ? 'Share This Verse'
-                        : 'Govana Vesi Iri',
+                        : 'Govana Vhesi Iri',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
                     language == 'english'
-                        ? 'Gmail, Messages, WhatsApp, etc.'
-                        : 'Gmail, Messages, WhatsApp, zvimwe.',
+                        ? 'Gmail, Messages, etc.'
+                        : 'Gmail, Messages, zvimwe.',
                   ),
                   onTap: () {
                     Navigator.pop(context);
@@ -325,13 +327,13 @@ class SharingService {
                   title: Text(
                     language == 'english'
                         ? 'Share Selected Verses'
-                        : 'Govana Mavesi Akasarudzwa',
+                        : 'Govana Mavhesi Akasarudzwa',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
                     language == 'english'
-                        ? 'Gmail, Messages, WhatsApp, etc.'
-                        : 'Gmail, Messages, WhatsApp, zvimwe.',
+                        ? 'Gmail, Messages, etc.'
+                        : 'Gmail, Messages, zvimwe.',
                   ),
                   onTap: () {
                     Navigator.pop(context);
@@ -358,8 +360,8 @@ class SharingService {
                 ),
                 subtitle: Text(
                   language == 'english'
-                      ? 'Gmail, Messages, WhatsApp, etc.'
-                      : 'Gmail, Messages, WhatsApp, zvimwe.',
+                      ? 'Gmail, Messages, etc.'
+                      : 'Gmail, Messages, zvimwe.',
                 ),
                 onTap: () {
                   Navigator.pop(context);
