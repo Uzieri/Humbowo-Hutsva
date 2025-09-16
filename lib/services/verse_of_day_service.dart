@@ -339,7 +339,7 @@ class VerseOfDayService {
         language == 'english' ? '🌅 Daily Verse' : '🌅 Vesi reZuva',
         language == 'english'
             ? 'Your spiritual inspiration awaits! Tap to read today\'s verse.'
-            : 'Kufuridza kwako kwemweya kwakakumirira! Dzvanya kuti uverenga vesi razuva.',
+            : 'Vhesi yanhasi! Dzvanya kuti uverenga vesi yezuva.',
         scheduledTime,
         notificationDetails,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -404,7 +404,7 @@ class VerseOfDayService {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  language == 'english' ? 'Verse of the Day' : 'Vesi reZuva',
+                  language == 'english' ? 'Verse of the Day' : 'Vhesi reZuva',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

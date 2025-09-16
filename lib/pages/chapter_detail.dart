@@ -18,6 +18,12 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
   String? errorMessage;
   int currentChapterNumber = 1;
 
+  // Drawer related variables
+  List<Chapter> chapters = [];
+  bool isLoadingChapters = true;
+  String? chaptersErrorMessage;
+  String? currentLanguage;
+
   final SettingsService _settingsService = SettingsService.instance;
   double _fontSize = 16.0;
   bool _isDarkMode = false;
@@ -29,6 +35,7 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
     super.didChangeDependencies();
     _loadSettings();
     _loadChapterData();
+    _loadChapters(); // Load chapters for the drawer
   }
 
   Future<void> _loadSettings() async {
@@ -38,6 +45,7 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
       _isDarkMode = _settingsService.isDarkMode;
       _textColor = _settingsService.textColor;
       _backgroundColor = _settingsService.backgroundColor;
+      currentLanguage = _settingsService.selectedLanguage;
     });
   }
 
@@ -79,6 +87,29 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
     }
   }
 
+  // Load chapters for the drawer
+  Future<void> _loadChapters() async {
+    try {
+      setState(() {
+        isLoadingChapters = true;
+        chaptersErrorMessage = null;
+      });
+
+      await BookService.instance.loadBook();
+      final allChapters = await BookService.instance.getAllChapters();
+
+      setState(() {
+        chapters = allChapters;
+        isLoadingChapters = false;
+      });
+    } catch (e) {
+      setState(() {
+        chaptersErrorMessage = 'Failed to load chapters: $e';
+        isLoadingChapters = false;
+      });
+    }
+  }
+
   void _navigateToChapter(int chapterNumber) {
     Navigator.pushReplacementNamed(
       context,
@@ -113,6 +144,12 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
     return Scaffold(
       backgroundColor: _backgroundColor,
       appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: Text(
           'Chapter $currentChapterNumber',
           style: const TextStyle(
@@ -147,7 +184,178 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
           ),
         ],
       ),
+      drawer: _buildChaptersDrawer(),
       body: _buildBody(),
+    );
+  }
+
+  Widget _buildChaptersDrawer() {
+    final language = currentLanguage ?? 'shona';
+
+    return Drawer(
+      backgroundColor: const Color.fromARGB(255, 201, 194, 194),
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Drawer header - reduced height
+            Container(
+              height: 100,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.blue[600]!, Colors.blue[700]!],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      language == 'english' ? 'Chapters' : 'Zvitsauko',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Times New Roman',
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      language == 'english'
+                          ? '${chapters.length} chapters'
+                          : 'Zvitsauko ${chapters.length}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontFamily: 'Times New Roman',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Chapters list - properly constrained
+            Expanded(
+              child: isLoadingChapters
+                  ? const Center(child: CircularProgressIndicator())
+                  : chaptersErrorMessage != null
+                  ? SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: Colors.red[400],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              chaptersErrorMessage!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.red[600],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: _loadChapters,
+                              child: Text(
+                                language == 'english' ? 'Retry' : 'Edza',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadChapters,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
+                        itemCount: chapters.length,
+                        itemBuilder: (context, index) {
+                          final chapterItem = chapters[index];
+                          return _buildDrawerChapterCard(context, chapterItem);
+                        },
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerChapterCard(BuildContext context, Chapter chapterItem) {
+    final isCurrentChapter = chapterItem.number == currentChapterNumber;
+    final language = currentLanguage ?? 'shona';
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+      elevation: isCurrentChapter ? 4 : 1,
+      color: isCurrentChapter ? Colors.blue[100] : Colors.white,
+      child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: isCurrentChapter ? Colors.blue[700] : Colors.grey[400],
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              '${chapterItem.number}',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: isCurrentChapter ? 14 : 12,
+              ),
+            ),
+          ),
+        ),
+        title: Text(
+          chapterItem.displayTitle,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isCurrentChapter ? FontWeight.bold : FontWeight.normal,
+            fontFamily: 'Times New Roman',
+            color: isCurrentChapter ? Colors.blue[900] : Colors.black87,
+          ),
+        ),
+        subtitle: Text(
+          language == 'english'
+              ? '${chapterItem.verses.length} verses'
+              : 'Mavesi ${chapterItem.verses.length}',
+          style: TextStyle(
+            fontSize: 10,
+            color: isCurrentChapter ? Colors.blue[700] : Colors.grey[600],
+          ),
+        ),
+        trailing: isCurrentChapter
+            ? Icon(Icons.chevron_right, color: Colors.blue[700], size: 20)
+            : null,
+        selected: isCurrentChapter,
+        selectedTileColor: Colors.blue[50],
+        onTap: () {
+          Navigator.pop(context); // Close drawer
+          if (!isCurrentChapter) {
+            _navigateToChapter(chapterItem.number);
+          }
+        },
+      ),
     );
   }
 
@@ -228,14 +436,6 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
                   fontFamily: 'Times New Roman',
                 ),
               ),
-              const SizedBox(height: 4),
-              /*  Text(
-                '${chapter!.verses.length} verses',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: _isDarkMode ? Colors.white60 : Colors.grey[500],
-                ),
-              ),*/
             ],
           ),
         ),
@@ -276,8 +476,7 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
                   icon: const Icon(Icons.navigate_before),
                   label: Text(
                     'Chapter ${currentChapterNumber - 1}',
-
-                    style: TextStyle(fontFamily: 'Times New Roman'),
+                    style: const TextStyle(fontFamily: 'Times New Roman'),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: currentChapterNumber > 1
@@ -300,9 +499,11 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  icon: const Icon(Icons.list),
+                  icon: const Icon(
+                    Icons.home,
+                  ), // Changed from Icons.list to Icons.home
                   label: const Text(
-                    'Chapters',
+                    'Home',
                     style: TextStyle(fontFamily: 'Times New Roman'),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -329,7 +530,7 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
                   icon: const Icon(Icons.navigate_next),
                   label: Text(
                     'Chapter ${currentChapterNumber + 1}',
-                    style: TextStyle(fontFamily: 'Times New Roman'),
+                    style: const TextStyle(fontFamily: 'Times New Roman'),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: currentChapterNumber < 26
@@ -422,8 +623,7 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
                   fontSize: _fontSize,
                   height: 1.5,
                   color: _textColor,
-                  fontFamily:
-                      'serif', // Use serif instead of Times New Roman for better compatibility
+                  fontFamily: 'serif',
                 ),
               ),
             ),

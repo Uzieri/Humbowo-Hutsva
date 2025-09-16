@@ -290,7 +290,7 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           ),
           const Divider(height: 1),
-          // NEW TEST NOTIFICATION BUTTON
+          /*// NEW TEST NOTIFICATION BUTTON
           ListTile(
             leading: Icon(
               Icons.notifications_active,
@@ -379,7 +379,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 }
               }
             },
-          ),
+          ),*/
         ],
       ),
     );
