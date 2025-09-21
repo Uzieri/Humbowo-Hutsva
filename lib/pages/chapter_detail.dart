@@ -360,6 +360,7 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
   }
 
   Widget _buildBody() {
+    final language = currentLanguage ?? 'shona';
     if (isLoading) {
       return Center(
         child: Column(
@@ -429,7 +430,9 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Humbowo Hutsva wewaPostori',
+                language == 'english'
+                    ? 'The New Testament of The Apostles'
+                    : 'Humbowo Hutsva wewaPostori',
                 style: TextStyle(
                   fontSize: 14,
                   color: _isDarkMode ? Colors.white70 : Colors.grey[600],
@@ -522,7 +525,7 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
               // Next chapter button
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: currentChapterNumber < 26
+                  onPressed: currentChapterNumber < 25
                       ? () {
                           _navigateToChapter(currentChapterNumber + 1);
                         }
@@ -533,7 +536,7 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
                     style: const TextStyle(fontFamily: 'Times New Roman'),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: currentChapterNumber < 26
+                    backgroundColor: currentChapterNumber < 25
                         ? Colors.blue[700]
                         : Colors.grey[300],
                     foregroundColor: Colors.white,

@@ -132,7 +132,7 @@ class _ChaptersPageState extends State<ChaptersPage> {
         backgroundColor: const Color.fromARGB(255, 201, 194, 194),
         appBar: AppBar(
           title: Text(
-            language == 'english' ? 'New Apostolic Evidence' : 'Humbowo Hutsva',
+            language == 'english' ? 'The New Testament' : 'Humbowo Hutsva',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 20,
@@ -522,9 +522,13 @@ class _ChaptersPageState extends State<ChaptersPage> {
             ),
             child: Text(
               language == 'english'
-                  ? '''Mtema begot Momberume, Momberume begot John, who is called John Marange today.
+                  ? '''Mutema begat Momberume, Momberume begat John who is called John Marange today.
 
-In the year seventeen 1917 Jehovah began to visit him when he was five years old. In the sixth year he received the holy spirit. This is the Apostolic Church today from 1912 his birth to receiving the Spirit in 1917. The year 1917 I completed five years (5 yrs) sixth (6 yrs) that is when I began to receive the spirit of the Lord, the Holy Spirit.'''
+ In the year 1917, Jehovah started to visit him at the age of five and in the sixth year he received the Holy Spirit.
+ This is the Apostle Church which started by his Birth in 1912 and it came to light in 1917 when he
+ received the Holy Spirit.
+ "In 1917 when I was five years old the Lord started to visit me, and in the sixth year I received the Holy
+ Ghost of God."'''
                   : '''Mtema wakabereka Momberume, Momberume wakabereka John, ndiye unonzi John Marange nhasi.
 
 Ngegore regumi nemanomwe 1917 Jehovha akavambe kumushanyira aine makore mashanu. Mune retanhatu akagashire mudzimu unoera. Iyi ndiyoyi Apostori Chechi nhasi kubvira gore ra1912 kuberekwa kwake kugashira Mweya 1917. Gore ra1917 ndapedza makore mashanu (5 yrs) retanhatu (6 yrs) ndiro randakavambe kugashira mudzimu waTenzi Mweya Mutsvene.''',
