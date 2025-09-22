@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:humbowo_hutsva_wewapostori/services/sharing_service.dart';
+import 'package:humbowo_hutsva_wewapostori/widgets/language_selector.dart';
 import '../models/book_models.dart';
 import '../services/book_service.dart';
 import '../services/settings_service.dart';
@@ -29,6 +30,8 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
   bool _isDarkMode = false;
   Color _textColor = Colors.black87;
   Color _backgroundColor = Colors.white;
+
+  bool _isReloading = false;
 
   @override
   void didChangeDependencies() {
@@ -139,8 +142,38 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
     setState(() {}); // Refresh to update bookmark icons
   }
 
+  Future<void> _checkLanguageChange() async {
+    if (_isReloading) return; // Prevent multiple simultaneous reloads
+
+    await _settingsService.init();
+    final newLanguage = _settingsService.selectedLanguage;
+
+    print(
+      '🔍 DEBUG: _checkLanguageChange - Current: $currentLanguage, New: $newLanguage',
+    );
+
+    if (newLanguage != currentLanguage) {
+      print('🔍 DEBUG: Language changed, forcing reload...');
+
+      setState(() {
+        currentLanguage = newLanguage;
+        _isReloading = true;
+      });
+
+      // Force clear all caches and reload
+      await BookService.instance
+          .reloadBook(); // Use reloadBook instead of onLanguageChanged
+      await _loadChapters();
+
+      setState(() {
+        _isReloading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final language = currentLanguage ?? 'shona';
     return Scaffold(
       backgroundColor: _backgroundColor,
       appBar: AppBar(
@@ -151,7 +184,9 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
           ),
         ),
         title: Text(
-          'Chapter $currentChapterNumber',
+          language == 'english'
+              ? 'Chapter $currentChapterNumber'
+              : 'Chitsauko $currentChapterNumber',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
@@ -163,6 +198,15 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
         elevation: 2,
         centerTitle: true,
         actions: [
+          LanguageSelector(
+            onLanguageChanged: () {
+              print('🔍 DEBUG: Language selector callback triggered');
+              // Add a small delay to ensure settings are saved
+              Future.delayed(const Duration(milliseconds: 100), () {
+                _checkLanguageChange();
+              });
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () async {
@@ -338,7 +382,7 @@ class _ChapterDetailPageState extends State<ChapterDetailPage> {
         subtitle: Text(
           language == 'english'
               ? '${chapterItem.verses.length} verses'
-              : 'Mavesi ${chapterItem.verses.length}',
+              : 'Mavhesi ${chapterItem.verses.length}',
           style: TextStyle(
             fontSize: 10,
             color: isCurrentChapter ? Colors.blue[700] : Colors.grey[600],
